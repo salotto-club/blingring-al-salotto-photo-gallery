@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Progetto</title>
+
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      font-family: sans-serif;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 4px;
+      padding: 4px;
+    }
+
+    .grid img {
+      width: 100%;
+      display: block;
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+    }
+
+    .grid img:hover {
+      opacity: 0.9;
+    }
+
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      overflow: hidden;
+    }
+
+    .lightbox.active {
+      display: flex;
+    }
+
+    .lightbox img {
+      max-width: 95vw;
+      max-height: 95vh;
+      object-fit: contain;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      opacity: 0;
+      transform: scale(0.98);
+    }
+
+    .lightbox img.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="grid" id="gallery"></div>
+
+<div class="lightbox" id="lightbox">
+  <img id="lightboxImg" src="">
+</div>
+
+<script>
+  const gallery = document.getElementById("gallery");
+  const lightbox = document.getElementById("lightbox");
+  const lightboxImg = document.getElementById("lightboxImg");
+
+  const images = [];
+
+  for (let i = 1; i <= 299; i++) {
+    const num = String(i).padStart(3, "0");
+    const src = `image${num}.jpeg`;
+    images.push(src);
+
+    const img = document.createElement("img");
+    img.src = src;
+    img.loading = "lazy";
+
+    img.addEventListener("click", () => openLightbox(i - 1));
+
+    gallery.appendChild(img);
+  }
+
+  let currentIndex = 0;
+
+  function showImage(index) {
+    lightboxImg.classList.remove("show");
+
+    setTimeout(() => {
+      lightboxImg.src = images[index];
+      lightboxImg.onload = () => {
+        lightboxImg.classList.add("show");
+      };
+    }, 100);
+  }
+
+  function openLightbox(index) {
+    currentIndex = index;
+    lightbox.classList.add("active");
+    document.body.style.overflow = "hidden";
+    showImage(currentIndex);
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove("active");
+    document.body.style.overflow = "";
+  }
+
+  function next() {
+    currentIndex = (currentIndex + 1) % images.length;
+    showImage(currentIndex);
+  }
+
+  function prev() {
+    currentIndex = (currentIndex - 1 + images.length) % images.length;
+    showImage(currentIndex);
+  }
+
+  // CLICK lato sinistra/destra
+  lightbox.addEventListener("click", (e) => {
+    const x = e.clientX;
+    const width = window.innerWidth;
+
+    if (x < width * 0.4) {
+      prev();
+    } else if (x > width * 0.6) {
+      next();
+    } else {
+      closeLightbox();
+    }
+  });
+
+  // Tastiera
+  document.addEventListener("keydown", (e) => {
+    if (!lightbox.classList.contains("active")) return;
+
+    if (e.key === "ArrowRight") next();
+    if (e.key === "ArrowLeft") prev();
+    if (e.key === "Escape") closeLightbox();
+  });
+
+  // SWIPE mobile
+  let touchStartX = 0;
+
+  lightbox.addEventListener("touchstart", (e) => {
+    touchStartX = e.touches[0].clientX;
+  });
+
+  lightbox.addEventListener("touchend", (e) => {
+    let touchEndX = e.changedTouches[0].clientX;
+    let diff = touchStartX - touchEndX;
+
+    if (diff > 50) next();       // swipe sinistra
+    else if (diff < -50) prev(); // swipe destra
+  });
+
+</script>
+
+</body>
+</html>
